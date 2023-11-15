@@ -27,7 +27,8 @@ release:
 		--volume `pwd`:/demo docker.io/library/golang:1.20.11-alpine3.18 \
 		sh -c "apk add --no-cache make git clang llvm && make local-release VERSION=${VERSION}"
 
-local-release: clean
+local-release: 
+	$(GO_GENERATE) \
 	OS=linux; \
 	ARCHS='amd64 arm64'; \
 	for ARCH in $$ARCHS; do \
