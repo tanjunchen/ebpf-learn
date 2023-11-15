@@ -2,7 +2,7 @@ GO := go
 GO_BUILD = CGO_ENABLED=0 $(GO) build
 GO_GENERATE = $(GO) generate
 GO_TAGS ?=
-TARGET=BPFDemo
+TARGET=demo
 INSTALL = $(QUIET)install
 BINDIR ?= /usr/local/bin
 VERSION=$(shell git describe --tags --always)
@@ -13,7 +13,7 @@ RELEASE_GID ?= $(shell id -g)
 
 $(TARGET):
 	$(GO_GENERATE)
-	$(GO_BUILD) $(if $(GO_TAGS),-tags $(GO_TAGS)) \
+	$(GO_BUILD) -o $(TARGET)  $(if $(GO_TAGS),-tags $(GO_TAGS)) \
 		-ldflags "-w -s \
 		-X 'github.com/ebpf-learn/Version=${VERSION}'"
 
@@ -44,7 +44,9 @@ local-release: clean
 	fi
 
 clean:
-	rm -f ebpf 
-	rm -f bpfdemo_bpf*
+	rm -f demo_bpf*
+	rm -rf demo
 	rm -rf ./release
+	find "$(CURDIR)" -name "*.elf" -delete
+	find "$(CURDIR)" -name "*.o" -delete
 

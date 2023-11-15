@@ -1,6 +1,3 @@
-//go:build linux
-// +build linux
-
 // This program demonstrates attaching an eBPF program to a kernel symbol.
 // The eBPF program will be attached to the start of the sys_execve
 // kernel function and prints out the number of times it has been called
@@ -16,7 +13,8 @@ import (
 )
 
 //go:generate sh -c "echo Generating for amd64"
-//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang BPFDemo ./bpf/kprobe.c -- -DOUTPUT_SKB -D__TARGET_ARCH_x86 -I./bpf/headers
+//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang demo kprobe.c -- -DOUTPUT_SKB -D__TARGET_ARCH_x86 -I./headers
+
 
 const mapKey uint32 = 0
 
@@ -31,8 +29,8 @@ func main() {
 	}
 
 	// Load pre-compiled programs and maps into the kernel.
-	objs := BPFDemoObjects{}
-	if err := LoadBPFDemoObjects(&objs, nil); err != nil {
+	objs := demoObjects{}
+	if err := loadDemoObjects(&objs, nil); err != nil {
 		log.Fatalf("loading objects: %v", err)
 	}
 	defer objs.Close()
@@ -41,7 +39,7 @@ func main() {
 	// pre-compiled program. Each time the kernel function enters, the program
 	// will increment the execution counter by 1. The read loop below polls this
 	// map value once per second.
-	kp, err := link.Kprobe(fn, objs.KprobeExecve)
+	kp, err := link.Kprobe(fn, objs.KprobeExecve, nil)
 	if err != nil {
 		log.Fatalf("opening kprobe: %s", err)
 	}
@@ -50,6 +48,7 @@ func main() {
 	// Read loop reporting the total amount of times the kernel
 	// function was entered, once per second.
 	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
 
 	log.Println("Waiting for events..")
 
